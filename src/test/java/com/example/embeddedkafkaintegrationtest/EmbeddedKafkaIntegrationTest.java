@@ -1,5 +1,9 @@
 package com.example.embeddedkafkaintegrationtest;
 
+import com.example.embeddedkafkaintegrationtest.entities.AdditionalUserInformation;
+import com.example.embeddedkafkaintegrationtest.model.EnrichedUserData;
+import com.example.embeddedkafkaintegrationtest.model.UserData;
+import com.example.embeddedkafkaintegrationtest.repositories.AdditionalUserInformationRepository;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.Test;
@@ -11,6 +15,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -21,14 +26,16 @@ class EmbeddedKafkaIntegrationTest {
 
 
 	@Autowired
-	KafkaTemplate<String, String> kafkaTemplate;
+	KafkaTemplate<String, UserData> kafkaTemplate;
 
 	@Autowired
 	KafkaAdmin kafkaAdmin;
 
 	@Autowired
-	ConsumerFactory<String, String> h;
+	ConsumerFactory<String, UserData> h;
 
+	@Autowired
+	AdditionalUserInformationRepository additionalUserInformationRepository;
 
 
 	@Test
@@ -36,21 +43,28 @@ class EmbeddedKafkaIntegrationTest {
 
 
 		//arrange
-		CompletableFuture test =kafkaTemplate.send("not-enriched-user-data","asd");
-
-		//act
+		AdditionalUserInformation additionalUserInformation = new AdditionalUserInformation();
+		additionalUserInformation.setAdditionalInformation("asd");
+		additionalUserInformation.setCustomerNumber("123");
+		additionalUserInformationRepository.save(additionalUserInformation);
+		CompletableFuture test =kafkaTemplate.send("not-enriched-user-data",new UserData("test","test"));
 		var x= test.get();
 
-		System.out.println("not-enriched-user-data");
+
+
+		//act
+
+
 		var t= h.createConsumer("test","asd");
-
-		ConsumerRecords<String,String> s=t.poll(1000);
-
+		t.subscribe(List.of("enriched-user-data"));
 
 
 
 
-		ConsumerRecord<String, String> received = KafkaTestUtils.getSingleRecord(t, "topic");
+
+
+
+		ConsumerRecord<String, UserData> received = KafkaTestUtils.getSingleRecord(t, "enriched-user-data");
 
 
 
