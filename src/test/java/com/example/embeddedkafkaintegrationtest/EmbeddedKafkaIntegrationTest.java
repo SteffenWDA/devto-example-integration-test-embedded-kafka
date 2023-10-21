@@ -58,20 +58,7 @@ class EmbeddedKafkaIntegrationTest {
 		var t= h.createConsumer("test","asd");
 		t.subscribe(List.of("enriched-user-data"));
 
-
-
-
-
-
-
 		ConsumerRecord<String, UserData> received = KafkaTestUtils.getSingleRecord(t, "enriched-user-data");
-
-
-
-
-
-
-
 
 	}
 
