@@ -1,11 +1,10 @@
 package com.example.embeddedkafkaintegrationtest.model;
 
-public class EnrichedUserData extends UserData{
+public class EnrichedUserData extends UserData {
 
     private String enrichedInfo;
 
-    public EnrichedUserData()
-    {
+    public EnrichedUserData() {
 
     }
 
