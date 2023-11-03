@@ -36,20 +36,18 @@ class EmbeddedKafkaIntegrationTest {
 
 
     @Test
-    void executeIntegrationTest()  {
-
-
+    void executeIntegrationTest() {
         //arrange
         final String customerNumber = "customerNumber";
         final String userName = "userName";
-        final String interestingAdditionalInformation= "interesting additional information";
+        final String interestingAdditionalInformation = "interesting additional information";
 
         AdditionalUserInformation additionalUserInformation = new AdditionalUserInformation();
         additionalUserInformation.setAdditionalInformation(interestingAdditionalInformation);
         additionalUserInformation.setCustomerNumber(customerNumber);
         additionalUserInformationRepository.save(additionalUserInformation);
 
-        Consumer<String,EnrichedUserData> testConsumer = consumerFactory.createConsumer("test", "test");
+        Consumer<String, EnrichedUserData> testConsumer = consumerFactory.createConsumer("test", "test");
         testConsumer.subscribe(List.of("enriched-user-data"));
 
         //act
@@ -58,9 +56,9 @@ class EmbeddedKafkaIntegrationTest {
         //assert
         ConsumerRecord<String, EnrichedUserData> receivedRecord = KafkaTestUtils.getSingleRecord(testConsumer, "enriched-user-data");
         Assertions.assertAll("",
-                () -> assertEquals(userName,receivedRecord.value().getUserName()),
-                () -> assertEquals(customerNumber,receivedRecord.value().getCustomerNumber()),
-                () -> assertEquals(interestingAdditionalInformation,receivedRecord.value().getEnrichedInfo())
+                () -> assertEquals(userName, receivedRecord.value().getUserName()),
+                () -> assertEquals(customerNumber, receivedRecord.value().getCustomerNumber()),
+                () -> assertEquals(interestingAdditionalInformation, receivedRecord.value().getEnrichedInfo())
         );
 
     }
