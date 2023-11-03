@@ -25,12 +25,12 @@ public class ConsumerNotEnrichedUserData {
 
     }
 
-    @KafkaListener(topics = TOPIC_NAME, id = "myId")
+    @KafkaListener(topics = TOPIC_NAME, id = "listenerId")
     public void handle(UserData message) {
 
-        Optional<AdditionalUserInformation> additionalUserInformation = additionalUserInformationRepository.findById("123");
-        additionalUserInformation.ifPresent(x -> {
-            kafkaTemplate.send(ENRICHED_USER_DATA_TOPIC, new EnrichedUserData("a", "b", x.getAdditionalInformation()));
+        Optional<AdditionalUserInformation> additionalUserInformation = additionalUserInformationRepository.findById(message.getCustomerNumber());
+        additionalUserInformation.ifPresent(userInformation -> {
+            kafkaTemplate.send(ENRICHED_USER_DATA_TOPIC, new EnrichedUserData(message.getUserName(), userInformation.getCustomerNumber(), userInformation.getAdditionalInformation()));
         });
     }
 
