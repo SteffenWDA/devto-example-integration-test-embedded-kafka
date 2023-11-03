@@ -4,6 +4,7 @@ import com.example.embeddedkafkaintegrationtest.entities.AdditionalUserInformati
 import com.example.embeddedkafkaintegrationtest.model.EnrichedUserData;
 import com.example.embeddedkafkaintegrationtest.model.UserData;
 import com.example.embeddedkafkaintegrationtest.repositories.AdditionalUserInformationRepository;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -11,13 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -31,14 +29,14 @@ class EmbeddedKafkaIntegrationTest {
     KafkaTemplate<String, UserData> kafkaTemplate;
 
     @Autowired
-    ConsumerFactory<String, EnrichedUserData> h;
+    ConsumerFactory<String, EnrichedUserData> consumerFactory;
 
     @Autowired
     AdditionalUserInformationRepository additionalUserInformationRepository;
 
 
     @Test
-    void executeIntegrationTest() throws InterruptedException, ExecutionException {
+    void executeIntegrationTest()  {
 
 
         //arrange
@@ -46,22 +44,19 @@ class EmbeddedKafkaIntegrationTest {
         final String userName = "userName";
         final String interestingAdditionalInformation= "interesting additional information";
 
-
         AdditionalUserInformation additionalUserInformation = new AdditionalUserInformation();
         additionalUserInformation.setAdditionalInformation(interestingAdditionalInformation);
         additionalUserInformation.setCustomerNumber(customerNumber);
         additionalUserInformationRepository.save(additionalUserInformation);
 
-        CompletableFuture<SendResult<String, UserData>> test = kafkaTemplate.send("not-enriched-user-data", new UserData(userName, customerNumber));
-        var x = test.get();
-        var t = h.createConsumer("test", "test");
-        t.subscribe(List.of("enriched-user-data"));
+        Consumer<String,EnrichedUserData> testConsumer = consumerFactory.createConsumer("test", "test");
+        testConsumer.subscribe(List.of("enriched-user-data"));
 
         //act
-
+        kafkaTemplate.send("not-enriched-user-data", new UserData(userName, customerNumber));
 
         //assert
-        ConsumerRecord<String, EnrichedUserData> receivedRecord = KafkaTestUtils.getSingleRecord(t, "enriched-user-data");
+        ConsumerRecord<String, EnrichedUserData> receivedRecord = KafkaTestUtils.getSingleRecord(testConsumer, "enriched-user-data");
         Assertions.assertAll("",
                 () -> assertEquals(userName,receivedRecord.value().getUserName()),
                 () -> assertEquals(customerNumber,receivedRecord.value().getCustomerNumber()),
